@@ -121,6 +121,23 @@ resource "azurerm_scheduler_job" "web-recurring-daily" {
 }
 ```
 
+## Example Usage (storage queue action)
+
+```hcl
+resource "azurerm_scheduler_job" "storage-once-now" {
+    name                = "tfex-storage-once-now"
+    resource_group_name = "${azurerm_resource_group.rg.name}"
+    job_collection_name = "${azurerm_scheduler_job_collection.jc.name}"
+
+    action_storage_queue {
+        storage_account_name = "${azurerm_storage_account.asccount.name}"
+        storage_queue_name   = "${azurerm_storage_queue.queue.name}"
+        sas_token            = "sas_token"
+        message              = "Terraform Example - Scheduler Job test message"
+    }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -131,9 +148,13 @@ The following arguments are supported:
 
 * `job_collection_name` - (Required) Specifies the Scheduler Job Collection to add the job to. Changing this forces a new resource to be created.
 
-* `action_web` - (Required) A `action_web` block defining the job action as described below. Note this is identical to an `error_action_web` block.
+* `action_web` - (Required) A `action_web` block defining a web job action as described below. Note this is identical to an `error_action_web` block.
 
-* `error_action_web` - (Optional) A `error_action_web` block defining the action to take on an error as described below. Note this is identical to an `action_web` block.
+* `action_storage_queue` - (Required) A `action_storage_queue` block defining a storage queue job action as described below. Note this is identical to an `error_action_storage_queue` block.
+
+* `error_action_web` - (Optional) A `error_action_web` block defining the a web action to take on an error as described below. Note this is identical to an `action_web` block.
+
+* `error_action_storage_queue` - (Optional) A `error_action_storage_queue` block defining the a web action to take on an error as described below. Note this is identical to an `action_storage_queue` block.
 
 * `retry` - (Optional) A `retry` block defining how to retry as described below. Omitting this block defaults to no retry.
 
@@ -144,7 +165,7 @@ The following arguments are supported:
 * `state` - (Optional) The sets or gets the current state of the job. Could be one of: `Enabled`, `Completed`, `Disabled`, `Faulted`
 
 
-`web_action` & `error_web_action` block supports the following:
+`action_web` & `error_action_web` block supports the following:
 
 * `url` - (Required) Specifies the URL of the web request. Must be HTTPS for authenticated requests.
 * `method` - (Optional) Specifies the method of the request. Defaults to `Get` and must be one of `Get`, `Put`, `Post`, `Delete`.
@@ -176,6 +197,14 @@ The following arguments are supported:
 * `tenant_id` - (Required) Specifies the tenant ID to use.
 * `secret` - (Required) Specifies the secret to use. Cannot be imported.
 * `audience` - (Optional) Specifies the audience.
+
+
+`action_storage_queue` & `error_action_storage_queue` block supports the following:
+
+* `storage_account_name` - (Required) Specifies the the storage account name.
+* `storage_queue_name` - (Required) Specifies the the storage account queue.
+* `sas_token` - (Required) Specifies a SAS token/key to authenticate with.
+* `message` - (Optional) The message to send into the queue.
 
 
 `retry` block supports the following:

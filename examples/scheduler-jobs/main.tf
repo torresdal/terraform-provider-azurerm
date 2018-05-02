@@ -169,3 +169,40 @@ resource "azurerm_scheduler_job" "web-recurring_monthly-error_action" {
 
     start_time = "2019-07-07T07:07:07-07:00"
 }
+
+//storage queues
+resource "azurerm_storage_account" "asccount" {
+    name                     = "tfexschedulerjobs"
+    resource_group_name      = "${azurerm_resource_group.rg.name}"
+    location                 = "${azurerm_resource_group.rg.location}"
+    account_tier             = "Standard"
+    account_replication_type = "LRS"
+}
+
+resource "azurerm_storage_queue" "queue" {
+    name                 = "tfex-scheduler-jobs"
+    resource_group_name  = "${azurerm_resource_group.rg.name}"
+    storage_account_name = "${azurerm_storage_account.asccount.name}"
+}
+
+resource "azurerm_scheduler_job" "storage-once-now" {
+    name                = "tfex-storage-once-now"
+    resource_group_name = "${azurerm_resource_group.rg.name}"
+    job_collection_name = "${azurerm_scheduler_job_collection.jc.name}"
+
+    state = "enabled"
+
+    action_storage_queue {
+        storage_account_name = "${azurerm_storage_account.asccount.name}"
+        storage_queue_name   = "${azurerm_storage_queue.queue.name}"
+        sas_token            = "sas_token"
+        message              = "Terraform Example - success"
+    }
+
+    error_action_storage_queue {
+        storage_account_name = "${azurerm_storage_account.asccount.name}"
+        storage_queue_name   = "${azurerm_storage_queue.queue.name}"
+        sas_token            = "sas_token"
+        message              = "Terraform Example - error"
+    }
+}

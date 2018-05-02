@@ -25,9 +25,9 @@ func TestAccAzureRMSchedulerJob_web_basic(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -51,19 +51,19 @@ func TestAccAzureRMSchedulerJob_startTime(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
 				),
 			},
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_startTime("2019-07-07T07:07:07-07:00"),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_startTime(resourceName, "2019-07-07T14:07:07Z"),
@@ -88,10 +88,10 @@ func TestAccAzureRMSchedulerJob_web_retry(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_retry_empty(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -99,10 +99,10 @@ func TestAccAzureRMSchedulerJob_web_retry(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_retry_complete(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -128,10 +128,10 @@ func TestAccAzureRMSchedulerJob_web_recurring(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_basic(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -157,10 +157,10 @@ func TestAccAzureRMSchedulerJob_web_recurringDaily(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_daily(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -186,10 +186,10 @@ func TestAccAzureRMSchedulerJob_web_recurringWeekly(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_weekly(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -215,10 +215,10 @@ func TestAccAzureRMSchedulerJob_web_recurringMonthly(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_monthly(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -244,10 +244,10 @@ func TestAccAzureRMSchedulerJob_web_recurringMonthlyOccurrences(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_monthlyOccurrences(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -273,10 +273,10 @@ func TestAccAzureRMSchedulerJob_web_recurringAll(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_basic(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -284,10 +284,10 @@ func TestAccAzureRMSchedulerJob_web_recurringAll(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_daily(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -295,10 +295,10 @@ func TestAccAzureRMSchedulerJob_web_recurringAll(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_weekly(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -306,10 +306,10 @@ func TestAccAzureRMSchedulerJob_web_recurringAll(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_monthly(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -317,10 +317,10 @@ func TestAccAzureRMSchedulerJob_web_recurringAll(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_recurrence_monthlyOccurrences(),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -346,18 +346,18 @@ func TestAccAzureRMSchedulerJob_web_put(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
 				),
 			},
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_put("action_web"),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_put(resourceName, "action_web"),
@@ -382,9 +382,9 @@ func TestAccAzureRMSchedulerJob_web_authBasic(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_authBasic("action_web"),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_authBasic(resourceName, "action_web"),
@@ -410,9 +410,9 @@ func TestAccAzureRMSchedulerJob_web_authCert(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_authCert(),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_authCert(resourceName),
@@ -445,9 +445,9 @@ func TestAccAzureRMSchedulerJob_web_authAd(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_authAd(tenantId, clientId, secret),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_authAd(resourceName, tenantId, clientId, secret),
@@ -475,18 +475,18 @@ func TestAccAzureRMSchedulerJob_web_basic_onceToRecurring(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
 				),
 			},
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -511,19 +511,19 @@ func TestAccAzureRMSchedulerJob_errrActionWeb_basic(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
-					"", "", ""),
+					"", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
 				),
 			},
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("action_web"),
 					testAccAzureRMSchedulerJob_block_actionWeb_basic("error_action_web"),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_basic(resourceName, "action_web"),
@@ -549,10 +549,10 @@ func TestAccAzureRMSchedulerJob_errorActionWeb_put(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_put("action_web"),
 					testAccAzureRMSchedulerJob_block_actionWeb_put("error_action_web"),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_put(resourceName, "action_web"),
@@ -578,10 +578,10 @@ func TestAccAzureRMSchedulerJob_errorActionWeb_authBasic(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_authBasic("action_web"),
 					testAccAzureRMSchedulerJob_block_actionWeb_authBasic("error_action_web"),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_authBasic(resourceName, "action_web"),
@@ -611,10 +611,10 @@ func TestAccAzureRMSchedulerJob_errorAndActionWebAuth(t *testing.T) {
 		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(), "",
 					testAccAzureRMSchedulerJob_block_actionWeb_authCert(),
 					testAccAzureRMSchedulerJob_block_actionWeb_authBasic("error_action_web"),
-					"", ""),
+					""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkAccAzureRMSchedulerJob_base(resourceName),
 					checkAccAzureRMSchedulerJob_web_authCert(resourceName),
@@ -628,6 +628,70 @@ func TestAccAzureRMSchedulerJob_errorAndActionWebAuth(t *testing.T) {
 					"action_web.0.authentication_certificate.0.pfx",
 					"action_web.0.authentication_certificate.0.password",
 					"error_action_web.0.authentication_basic.0.password",
+				},
+			},
+		},
+	})
+}
+
+func TestAccAzureRMSchedulerJob_actionStorageBasic(t *testing.T) {
+	ri := acctest.RandInt()
+	resourceName := "azurerm_scheduler_job.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+					testAccAzureRMSchedulerJob_block_storageResources(ri),
+					testAccAzureRMSchedulerJob_block_storageBasic("action_storage_queue"),
+					"", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkAccAzureRMSchedulerJob_base(resourceName),
+					checkAccAzureRMSchedulerJob_storageBasic(resourceName, "action_storage_queue"),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true, ImportStateVerifyIgnore: []string{
+					"action_storage_queue.0.sas_token",
+				},
+			},
+		},
+	})
+}
+
+func TestAccAzureRMSchedulerJob_actionStorageAll(t *testing.T) {
+	ri := acctest.RandInt()
+	resourceName := "azurerm_scheduler_job.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testCheckAzureRMSchedulerJobDestroy,
+		Steps: []resource.TestStep{
+
+			{
+				Config: testAccAzureRMSchedulerJob_base(ri, testLocation(),
+					testAccAzureRMSchedulerJob_block_storageResources(ri),
+					testAccAzureRMSchedulerJob_block_storageBasic("action_storage_queue"),
+					testAccAzureRMSchedulerJob_block_storageBasic("error_action_storage_queue"),
+					""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkAccAzureRMSchedulerJob_base(resourceName),
+					checkAccAzureRMSchedulerJob_storageBasic(resourceName, "action_storage_queue"),
+					checkAccAzureRMSchedulerJob_storageBasic(resourceName, "error_action_storage_queue"),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true, ImportStateVerifyIgnore: []string{
+					"action_storage_queue.0.sas_token",
+					"error_action_storage_queue.0.sas_token",
 				},
 			},
 		},
@@ -694,7 +758,7 @@ func testCheckAzureRMSchedulerJobExists(name string) resource.TestCheckFunc {
 	}
 }
 
-func testAccAzureRMSchedulerJob_base(rInt int, location, block1, block2, block3, block4 string) string {
+func testAccAzureRMSchedulerJob_base(rInt int, location, otherResources, block1, block2, block3 string) string {
 	return fmt.Sprintf(` 
 resource "azurerm_resource_group" "rg" { 
   name     = "acctestRG-%[1]d" 
@@ -708,20 +772,21 @@ resource "azurerm_scheduler_job_collection" "jc" {
     sku                 = "standard"
 }
 
+%[3]s
+
 resource "azurerm_scheduler_job" "test" {
     name                = "acctestRG-%[1]d-job"
     resource_group_name = "${azurerm_resource_group.rg.name}"
     job_collection_name = "${azurerm_scheduler_job_collection.jc.name}"
-
-    %[3]s
 
     %[4]s
 
     %[5]s
 
     %[6]s
+
 } 
-`, rInt, location, block1, block2, block3, block4)
+`, rInt, location, otherResources, block1, block2, block3)
 }
 func checkAccAzureRMSchedulerJob_base(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
@@ -995,5 +1060,43 @@ func checkAccAzureRMSchedulerJob_web_authAd(resourceName, tenantId, clientId, se
 		resource.TestCheckResourceAttr(resourceName, "action_web.0.authentication_active_directory.0.client_id", clientId),
 		resource.TestCheckResourceAttr(resourceName, "action_web.0.authentication_active_directory.0.secret", secret),
 		resource.TestCheckResourceAttr(resourceName, "action_web.0.authentication_active_directory.0.audience", "https://management.core.windows.net/"),
+	)
+}
+
+func testAccAzureRMSchedulerJob_block_storageResources(rInt int) string {
+	return fmt.Sprintf(`
+  resource "azurerm_storage_account" "sa" {
+    name                     = "tfacc%d"
+    resource_group_name      = "${azurerm_resource_group.rg.name}"
+    location                 = "${azurerm_resource_group.rg.location}"
+    account_tier             = "Standard"
+    account_replication_type = "LRS"
+  }
+
+  resource "azurerm_storage_queue" "sq" {
+    name                 = "tfex-scheduler-jobs"
+    resource_group_name  = "${azurerm_resource_group.rg.name}"
+    storage_account_name = "${azurerm_storage_account.sa.name}"
+  }
+`, rInt)
+}
+
+func testAccAzureRMSchedulerJob_block_storageBasic(blockName string) string {
+	return fmt.Sprintf(`
+  %s {
+	 storage_account_name = "${azurerm_storage_account.sa.name}"
+     storage_queue_name   = "${azurerm_storage_queue.sq.name}"
+     sas_token            = "sas_token"
+     message              = "Terraform Example - Scheduler Job test message"
+  }
+`, blockName)
+}
+
+func checkAccAzureRMSchedulerJob_storageBasic(resourceName string, blockName string) resource.TestCheckFunc {
+	return resource.ComposeAggregateTestCheckFunc(
+		resource.TestCheckResourceAttrSet(resourceName, fmt.Sprintf("%s.0.storage_account_name", blockName)),
+		resource.TestCheckResourceAttr(resourceName, fmt.Sprintf("%s.0.storage_queue_name", blockName), "tfex-scheduler-jobs"),
+		resource.TestCheckResourceAttr(resourceName, fmt.Sprintf("%s.0.sas_token", blockName), "sas_token"),
+		resource.TestCheckResourceAttr(resourceName, fmt.Sprintf("%s.0.message", blockName), "Terraform Example - Scheduler Job test message"),
 	)
 }

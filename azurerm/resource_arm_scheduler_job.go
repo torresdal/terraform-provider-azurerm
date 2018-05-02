@@ -52,10 +52,16 @@ func resourceArmSchedulerJob() *schema.Resource {
 			},
 
 			//actions
-			"action_web": resourceArmSchedulerJobActionWebSchema("action_web"),
+			"action_web": resourceArmSchedulerJobActionWebSchema("action_web",
+				[]string{"action_storage_queue"}),
+			"action_storage_queue": resourceArmSchedulerJobActionStorageSchema("action_storage_queue",
+				[]string{"action_web"}),
 
 			//each action can also be an error action
-			"error_action_web": resourceArmSchedulerJobActionWebSchema("error_action_web"),
+			"error_action_web": resourceArmSchedulerJobActionWebSchema("error_action_web",
+				[]string{"error_action_storage_queue"}),
+			"error_action_storage_queue": resourceArmSchedulerJobActionStorageSchema("error_action_storage_queue",
+				[]string{"error_action_web"}),
 
 			//retry policy
 			"retry": {
@@ -236,13 +242,13 @@ func resourceArmSchedulerJob() *schema.Resource {
 	}
 }
 
-func resourceArmSchedulerJobActionWebSchema(propertyName string) *schema.Schema {
+func resourceArmSchedulerJobActionWebSchema(propertyName string, conflictsWith []string) *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeList,
-		MinItems: 1,
-		MaxItems: 1,
-		Optional: true,
-		//ConflictsWith: conflictsWith,
+		Type:          schema.TypeList,
+		MinItems:      1,
+		MaxItems:      1,
+		Optional:      true,
+		ConflictsWith: conflictsWith,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 
@@ -384,11 +390,50 @@ func resourceArmSchedulerJobActionWebSchema(propertyName string) *schema.Schema 
 	}
 }
 
+func resourceArmSchedulerJobActionStorageSchema(propertyName string, conflictsWith []string) *schema.Schema {
+	return &schema.Schema{
+		Type:          schema.TypeList,
+		MinItems:      1,
+		MaxItems:      1,
+		Optional:      true,
+		ConflictsWith: conflictsWith,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+
+				"storage_account_name": {
+					Type:             schema.TypeString,
+					Required:         true,
+					DiffSuppressFunc: supress.CaseDifference,
+					ValidateFunc:     validateArmStorageAccountName,
+				},
+
+				"storage_queue_name": {
+					Type:             schema.TypeString,
+					Required:         true,
+					DiffSuppressFunc: supress.CaseDifference,
+					ValidateFunc:     validateArmStorageQueueName,
+				},
+
+				"sas_token": {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+
+				"message": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+			},
+		},
+	}
+}
+
 func resourceArmSchedulerJobCustomizeDiff(diff *schema.ResourceDiff, v interface{}) error {
 
 	_, hasWeb := diff.GetOk("action_web")
-	if !hasWeb {
-		return fmt.Errorf("One of `action_web`, `action_servicebus` or `action_storagequeue` must be set")
+	_, hasStorage := diff.GetOk("action_storage_queue")
+	if !hasWeb && !hasStorage {
+		return fmt.Errorf("One of `action_web`, `action_servicebus` or `action_storage_queue` must be set")
 	}
 
 	if b, ok := diff.GetOk("recurrence"); ok {
@@ -469,12 +514,19 @@ func resourceArmSchedulerJobCreateUpdate(d *schema.ResourceData, meta interface{
 	//action
 	if b, ok := d.GetOk("action_web"); ok {
 		job.Properties.Action.Request, job.Properties.Action.Type = expandAzureArmSchedulerJobActionRequest(b)
+	} else if b, ok := d.GetOk("action_storage_queue"); ok {
+		job.Properties.Action.QueueMessage = expandAzureArmSchedulerJobActionStorage(b)
+		job.Properties.Action.Type = scheduler.StorageQueue
 	}
 
 	//error action
 	if b, ok := d.GetOk("error_action_web"); ok {
 		job.Properties.Action.ErrorAction = &scheduler.JobErrorAction{}
 		job.Properties.Action.ErrorAction.Request, job.Properties.Action.ErrorAction.Type = expandAzureArmSchedulerJobActionRequest(b)
+	} else if b, ok := d.GetOk("error_action_web"); ok {
+		job.Properties.Action.ErrorAction = &scheduler.JobErrorAction{}
+		job.Properties.Action.ErrorAction.QueueMessage = expandAzureArmSchedulerJobActionStorage(b)
+		job.Properties.Action.ErrorAction.Type = scheduler.StorageQueue
 	}
 
 	//retry policy
@@ -563,6 +615,8 @@ func resourceArmSchedulerJobPopulate(d *schema.ResourceData, resourceGroup strin
 	actionType := strings.ToLower(string(action.Type))
 	if strings.EqualFold(actionType, string(scheduler.HTTP)) || strings.EqualFold(actionType, string(scheduler.HTTPS)) {
 		d.Set("action_web", flattenAzureArmSchedulerJobActionRequest(action.Request, d.Get("action_web")))
+	} else if strings.EqualFold(actionType, string(scheduler.StorageQueue)) {
+		d.Set("action_storage_queue", flattenAzureArmSchedulerJobActionStorage(action.QueueMessage, d.Get("action_storage_queue")))
 	} else {
 		return fmt.Errorf("Unknown job type %q for scheduler job %q action (Resource Group %q)", action.Type, name, resourceGroup)
 	}
@@ -571,6 +625,8 @@ func resourceArmSchedulerJobPopulate(d *schema.ResourceData, resourceGroup strin
 	if errorAction := action.ErrorAction; errorAction != nil {
 		if strings.EqualFold(actionType, string(scheduler.HTTP)) || strings.EqualFold(actionType, string(scheduler.HTTPS)) {
 			d.Set("error_action_web", flattenAzureArmSchedulerJobActionRequest(errorAction.Request, d.Get("error_action_web")))
+		} else if strings.EqualFold(actionType, string(scheduler.StorageQueue)) {
+			d.Set("error_action_storage_queue", flattenAzureArmSchedulerJobActionStorage(errorAction.QueueMessage, d.Get("error_action_storage_queue")))
 		} else {
 			return fmt.Errorf("Unknown job type %q for scheduler job %q error action (Resource Group %q)", errorAction.Type, name, resourceGroup)
 		}
@@ -648,7 +704,6 @@ func resourceArmSchedulerJobDelete(d *schema.ResourceData, meta interface{}) err
 
 //expand (terraform -> API)
 func expandAzureArmSchedulerJobActionRequest(b interface{}) (*scheduler.HTTPRequest, scheduler.JobActionType) {
-
 	block := b.([]interface{})[0].(map[string]interface{})
 
 	url := block["url"].(string)
@@ -711,6 +766,19 @@ func expandAzureArmSchedulerJobActionRequest(b interface{}) (*scheduler.HTTPRequ
 	}
 
 	return &request, jobType
+}
+
+func expandAzureArmSchedulerJobActionStorage(b interface{}) *scheduler.StorageQueueMessage {
+	block := b.([]interface{})[0].(map[string]interface{})
+
+	message := scheduler.StorageQueueMessage{
+		StorageAccount: utils.String(block["storage_account_name"].(string)),
+		QueueName:      utils.String(block["storage_queue_name"].(string)),
+		SasToken:       utils.String(block["sas_token"].(string)),
+		Message:        utils.String(block["message"].(string)),
+	}
+
+	return &message
 }
 
 func expandAzureArmSchedulerJobActionRetry(b interface{}) *scheduler.RetryPolicy {
@@ -874,6 +942,31 @@ func flattenAzureArmSchedulerJobActionRequest(request *scheduler.HTTPRequest, ob
 				authBlock["secret"] = oab["secret"]
 			}
 		}
+	}
+
+	return []interface{}{block}
+}
+
+func flattenAzureArmSchedulerJobActionStorage(request *scheduler.StorageQueueMessage, ob interface{}) []interface{} {
+	block := map[string]interface{}{}
+	oldBlock := map[string]interface{}{}
+
+	if v, ok := ob.([]interface{}); ok && len(v) > 0 {
+		oldBlock = v[0].(map[string]interface{})
+	}
+
+	if v := request.StorageAccount; v != nil {
+		block["storage_account_name"] = *v
+	}
+	if v := request.QueueName; v != nil {
+		block["storage_queue_name"] = *v
+	}
+	if v := request.Message; v != nil {
+		block["message"] = *v
+	}
+
+	if v, ok := oldBlock["sas_token"].(string); ok {
+		block["sas_token"] = v
 	}
 
 	return []interface{}{block}

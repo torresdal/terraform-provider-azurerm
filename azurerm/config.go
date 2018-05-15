@@ -26,6 +26,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/iothub/mgmt/2017-07-01/devices"
 	keyVault "github.com/Azure/azure-sdk-for-go/services/keyvault/2016-10-01/keyvault"
 	"github.com/Azure/azure-sdk-for-go/services/keyvault/mgmt/2016-10-01/keyvault"
+	"github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic"
 	"github.com/Azure/azure-sdk-for-go/services/monitor/mgmt/2017-05-01-preview/insights"
 	"github.com/Azure/azure-sdk-for-go/services/mysql/mgmt/2017-04-30-preview/mysql"
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2017-09-01/network"
@@ -141,6 +142,9 @@ type ArmClient struct {
 	// KeyVault
 	keyVaultClient           keyvault.VaultsClient
 	keyVaultManagementClient keyVault.BaseClient
+
+	// Logic
+	logicAppClient logic.WorkflowsClient
 
 	// Monitor
 	monitorAlertRulesClient insights.AlertRulesClient
@@ -379,6 +383,7 @@ func getArmClient(c *authentication.Config) (*ArmClient, error) {
 	client.registerEventGridClients(endpoint, c.SubscriptionID, auth, sender)
 	client.registerEventHubClients(endpoint, c.SubscriptionID, auth, sender)
 	client.registerKeyVaultClients(endpoint, c.SubscriptionID, auth, keyVaultAuth, sender)
+	client.registerLogicAppClients(endpoint, c.SubscriptionID, auth, sender)
 	client.registerMonitorClients(endpoint, c.SubscriptionID, auth, sender)
 	client.registerNetworkingClients(endpoint, c.SubscriptionID, auth, sender)
 	client.registerOperationalInsightsClients(endpoint, c.SubscriptionID, auth, sender)
@@ -695,6 +700,12 @@ func (c *ArmClient) registerKeyVaultClients(endpoint, subscriptionId string, aut
 	keyVaultManagementClient.Sender = sender
 	keyVaultManagementClient.SkipResourceProviderRegistration = c.skipProviderRegistration
 	c.keyVaultManagementClient = keyVaultManagementClient
+}
+
+func (c *ArmClient) registerLogicAppClients(endpoint, subscriptionId string, auth autorest.Authorizer, sender autorest.Sender) {
+	logicAppClient := logic.NewWorkflowsClientWithBaseURI(endpoint, subscriptionId)
+	c.configureClient(&logicAppClient.Client, auth)
+	c.logicAppClient = logicAppClient
 }
 
 func (c *ArmClient) registerMonitorClients(endpoint, subscriptionId string, auth autorest.Authorizer, sender autorest.Sender) {

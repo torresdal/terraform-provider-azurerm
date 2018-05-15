@@ -166,6 +166,7 @@ func Provider() terraform.ResourceProvider {
 			"azurerm_local_network_gateway":               resourceArmLocalNetworkGateway(),
 			"azurerm_log_analytics_solution":              resourceArmLogAnalyticsSolution(),
 			"azurerm_log_analytics_workspace":             resourceArmLogAnalyticsWorkspace(),
+			"azurerm_logic_app":                           resourceArmLogicApp(),
 			"azurerm_managed_disk":                        resourceArmManagedDisk(),
 			"azurerm_management_lock":                     resourceArmManagementLock(),
 			"azurerm_metric_alertrule":                    resourceArmMetricAlertRule(),

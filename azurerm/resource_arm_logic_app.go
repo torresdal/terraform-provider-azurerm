@@ -3,11 +3,12 @@ package azurerm
 // Based the auto-generated code by Microsoft (R) AutoRest Code Generator.
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2016-06-01/logic"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
 func resourceArmLogicApp() *schema.Resource {
@@ -28,73 +29,27 @@ func resourceArmLogicApp() *schema.Resource {
 			},
 			"location":            locationSchema(),
 			"resource_group_name": resourceGroupNameSchema(),
-			"tags":                tagsSchema(),
-
-			"integration_account": {
-				Optional: true,
+			"definition": {
+				Required: true,
 				Type:     schema.TypeList,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"keyvault_id": {
+						"schema": {
 							Optional: true,
 							Type:     schema.TypeString,
+							Default:  "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json",
+						},
+						"content_version": {
+							Optional: true,
+							Type:     schema.TypeString,
+							Default:  "1.0.0.0",
 						},
 					},
 				},
 			},
-			"parameters": {
-				Optional: true,
-				Type:     schema.TypeMap,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"description": {
-							Optional: true,
-							Type:     schema.TypeString,
-						},
-						"type": {
-							Optional: true,
-							Type:     schema.TypeString,
-						},
-					},
-				},
-			},
-			"provisioning_state": {
-				Optional: true,
-				Type:     schema.TypeString,
-			},
-			"sku": {
-				Optional: true,
-				Type:     schema.TypeList,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"keyvault_id": {
-							Optional: true,
-							Type:     schema.TypeString,
-						},
-						"name": {
-							Required: true,
-							Type:     schema.TypeString,
-						},
-					},
-				},
-			},
-			"state": {
-				Optional: true,
-				Type:     schema.TypeString,
-			},
-			"type": {
-				Optional: true,
-				Type:     schema.TypeString,
-			},
-			"version": {
-				Optional: true,
-				Type:     schema.TypeString,
-			},
-
+			"tags": tagsSchema(),
 			"access_endpoint": {
-				Optional: true,
 				Computed: true,
 				Type:     schema.TypeString,
 			},
@@ -106,78 +61,28 @@ func resourceArmLogicAppCreateOrUpdate(d *schema.ResourceData, meta interface{})
 	client := meta.(*ArmClient).logicAppClient
 	ctx := meta.(*ArmClient).StopContext
 
-	workflowName := d.Get("name").(string)
-	location := azureRMNormalizeLocation(d.Get("location").(string))
-	resourceGroupName := d.Get("resource_group_name").(string)
-
 	workflow := logic.Workflow{
-		Location: utils.String(location),
+		WorkflowProperties: &logic.WorkflowProperties{
+			Definition: map[string]interface{}{
+				"$schema":        GetFieldString(d, "definition.0.schema"),
+				"contentVersion": GetFieldString(d, "definition.0.content_version"),
+				"parameters":     "{}",
+				"triggers":       "{}",
+				"actions":        "{}",
+				"outputs":        "{}",
+			},
+		},
+		Location: GetLocationField(d),
+		Tags:     GetTagsField(d),
 	}
 
-	if paramValue, paramExists := d.GetOk("type"); paramExists {
-		workflow.Type = utils.String(paramValue.(string))
-	}
-	if paramValue, paramExists := d.GetOk("tags"); paramExists {
-		tmpParamOfTags := expandTags(paramValue.(map[string]interface{}))
-		workflow.Tags = tmpParamOfTags
-	}
-	if paramValue, paramExists := d.GetOk("provisioning_state"); paramExists {
-		workflow.ProvisioningState = logic.WorkflowProvisioningState(paramValue.(string))
-	}
-	if paramValue, paramExists := d.GetOk("state"); paramExists {
-		workflow.State = logic.WorkflowState(paramValue.(string))
-	}
-	if paramValue, paramExists := d.GetOk("version"); paramExists {
-		workflow.Version = utils.String(paramValue.(string))
-	}
-	if paramValue, paramExists := d.GetOk("access_endpoint"); paramExists {
-		workflow.AccessEndpoint = utils.String(paramValue.(string))
-	}
-	workflow.Sku = &logic.Sku{}
-	if paramValue, paramExists := d.GetOk("sku"); paramExists {
-		tmpParamOfSku := paramValue.(map[string]interface{})
-		workflow.Sku.Name = logic.SkuName(tmpParamOfSku["name"].(string))
-		workflow.Sku.Plan = &logic.ResourceReference{}
-		if paramValue, paramExists := tmpParamOfSku["keyvault_id"]; paramExists {
-			workflow.Sku.Plan.ID = utils.String(paramValue.(string))
-		}
-	}
-	workflow.IntegrationAccount = &logic.ResourceReference{}
-	if paramValue, paramExists := d.GetOk("integration_account"); paramExists {
-		tmpParamOfIntegrationAccount := paramValue.(map[string]interface{})
-		if paramValue, paramExists := tmpParamOfIntegrationAccount["keyvault_id"]; paramExists {
-			workflow.IntegrationAccount.ID = utils.String(paramValue.(string))
-		}
-	}
-	if paramValue, paramExists := d.GetOk("parameters"); paramExists {
-		tmpParamOfParameters := make(map[string]logic.WorkflowParameter)
-		for tmpParamKeyOfParameters, tmpParamItemOfParameters := range paramValue.(map[string]interface{}) {
-			tmpParamValueOfParameters := tmpParamItemOfParameters.(map[string]interface{})
-			workflowParameters := &logic.WorkflowParameter{}
-			if paramValue, paramExists := tmpParamValueOfParameters["type"]; paramExists {
-				workflowParameters.Type = logic.ParameterType(paramValue.(string))
-			}
-			if paramValue, paramExists := tmpParamValueOfParameters["description"]; paramExists {
-				workflowParameters.Description = utils.String(paramValue.(string))
-			}
-			tmpParamOfParameters[tmpParamKeyOfParameters] = workflowParameters
-		}
-		workflow.Parameters = &tmpParamOfParameters
-	}
+	data, _ := json.Marshal(workflow)
+	log.Printf("REQUEST BODY: " + string(data))
 
-	_, err := client.CreateOrUpdate(ctx, resourceGroupName, workflowName, workflow)
+	err := CreateAPICall(d, client, ctx, "CreateOrUpdate", workflow)
 	if err != nil {
 		return fmt.Errorf("Logic App creation error: %+v", err)
 	}
-
-	read, err := client.Get(ctx, resourceGroupName, workflowName)
-	if err != nil {
-		return fmt.Errorf("Cannot get Logic App info after created: %+v", err)
-	}
-	if read.ID == nil {
-		return fmt.Errorf("Cannot get the ID of Logic App %q (Resource Group %q) ID", workflowName, resourceGroupName)
-	}
-	d.SetId(*read.ID)
 
 	return resourceArmLogicAppRead(d, meta)
 }
@@ -186,55 +91,31 @@ func resourceArmLogicAppRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ArmClient).logicAppClient
 	ctx := meta.(*ArmClient).StopContext
 
-	resourceGroupName := d.Get("resource_group_name").(string)
-	workflowName := d.Get("workflow_name").(string)
+	id, err := parseAzureResourceID(d.Id())
+	if err != nil {
+		return err
+	}
+	resourceGroupName := id.ResourceGroup
+	workflowName := id.Path["workflows"]
 
 	response, err := client.Get(ctx, resourceGroupName, workflowName)
 	if err != nil {
 		return fmt.Errorf("Logic App read error: %+v", err)
 	}
 
-	if response.Name != nil {
-		d.Set("name", *response.Name)
-	}
-	if response.Location != nil {
-		d.Set("location", *response.Location)
-	}
-	flattenAndSetTags(d, response.Tags)
-	d.Set("provisioning_state", response.ProvisioningState)
-	d.Set("state", response.State)
-	if response.Version != nil {
-		d.Set("version", *response.Version)
-	}
-	if response.AccessEndpoint != nil {
-		d.Set("access_endpoint", *response.AccessEndpoint)
-	}
-	if response.Sku != nil {
-		tmpRespOfSku := make(map[string]interface{})
-		d.Set("sku", tmpRespOfSku)
-	}
-	if response.IntegrationAccount != nil {
-		tmpRespOfIntegrationAccount := make(map[string]interface{})
-		if response.IntegrationAccount.Name != nil {
-			d.Set("name", *response.IntegrationAccount.Name)
-		}
-		if response.IntegrationAccount.Type != nil {
-			d.Set("type", *response.IntegrationAccount.Type)
-		}
-		d.Set("integration_account", tmpRespOfIntegrationAccount)
-	}
-	if response.Parameters != nil {
-		tmpRespOfParameters := make(map[string]interface{})
-		for tmpRespKeyOfParameters, tmpRespItemOfParameters := range *response.Parameters {
-			tmpRespValueOfParameters := make(map[string]interface{})
-			tmpRespValueOfParameters["type"] = tmpRespItemOfParameters.Type
-			if tmpRespItemOfParameters.Description != nil {
-				tmpRespValueOfParameters["description"] = *tmpRespItemOfParameters.Description
-			}
-			tmpRespOfParameters[tmpRespKeyOfParameters] = tmpRespValueOfParameters
-		}
-		d.Set("parameters", tmpRespOfParameters)
-	}
+	data, _ := json.Marshal(response)
+	log.Printf("RESPONSE BODY: " + string(data))
+	log.Printf("DEFINITION: %+v", response.Definition)
+
+	SetNameAndRGField(d, workflowName, resourceGroupName)
+	SetLocationField(d, response.Location)
+	SetTagsField(d, response.Tags)
+	SetFieldObject(d, "definition", response.Definition, func(r map[string]interface{}, v interface{}) {
+		m := response.Definition.(map[string]interface{})
+		SetSubFieldOptional(r, "schema", m["$schema"])
+		SetSubFieldOptional(r, "content_version", m["contentVersion"])
+	})
+	SetFieldOptional(d, "access_endpoint", response.AccessEndpoint)
 
 	return nil
 }
@@ -243,10 +124,14 @@ func resourceArmLogicAppDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ArmClient).logicAppClient
 	ctx := meta.(*ArmClient).StopContext
 
-	resourceGroupName := d.Get("resource_group_name").(string)
-	workflowName := d.Get("workflow_name").(string)
+	id, err := parseAzureResourceID(d.Id())
+	if err != nil {
+		return err
+	}
+	resourceGroupName := id.ResourceGroup
+	workflowName := id.Path["workflows"]
 
-	_, err := client.Delete(ctx, resourceGroupName, workflowName)
+	_, err = client.Delete(ctx, resourceGroupName, workflowName)
 	if err != nil {
 		return fmt.Errorf("Logic App deletion error: %+v", err)
 	}

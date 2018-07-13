@@ -108,6 +108,7 @@ type ArmClient struct {
 
 	// API Management
 	apiManagementServiceClient apimanagement.ServiceClient
+	apiManagementApiClient     apimanagement.APIClient
 
 	// Application Insights
 	appInsightsClient appinsights.ComponentsClient
@@ -425,7 +426,7 @@ func getArmClient(c *authentication.Config) (*ArmClient, error) {
 		return keyVaultSpt, nil
 	})
 
-	client.registerApiManagementServiceClients(endpoint, c.SubscriptionID, auth, sender)
+	client.registerApiManagementClients(endpoint, c.SubscriptionID, auth, sender)
 	client.registerAppInsightsClients(endpoint, c.SubscriptionID, auth, sender)
 	client.registerAutomationClients(endpoint, c.SubscriptionID, auth, sender)
 	client.registerAuthentication(endpoint, graphEndpoint, c.SubscriptionID, c.TenantID, auth, graphAuth, sender)
@@ -465,10 +466,18 @@ func getArmClient(c *authentication.Config) (*ArmClient, error) {
 	return &client, nil
 }
 
-func (c *ArmClient) registerApiManagementServiceClients(endpoint, subscriptionId string, auth autorest.Authorizer, sender autorest.Sender) {
+func (c *ArmClient) registerApiManagementClients(endpoint, subscriptionId string, auth autorest.Authorizer, sender autorest.Sender) {
 	ams := apimanagement.NewServiceClientWithBaseURI(endpoint, subscriptionId)
 	c.configureClient(&ams.Client, auth)
 	c.apiManagementServiceClient = ams
+
+	api := apimanagement.NewAPIClientWithBaseURI(endpoint, subscriptionId)
+	setUserAgent(&api.Client)
+	api.Authorizer = auth
+	api.Sender = sender
+	api.SkipResourceProviderRegistration = c.skipProviderRegistration
+	api.PollingDuration = 60 * time.Minute
+	c.apiManagementApiClient = api
 }
 
 func (c *ArmClient) registerAppInsightsClients(endpoint, subscriptionId string, auth autorest.Authorizer, sender autorest.Sender) {

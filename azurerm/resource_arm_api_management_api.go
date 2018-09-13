@@ -25,7 +25,7 @@ func resourceArmApiManagementApi() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
+				ForceNew: true,
 			},
 
 			"service_name": {
@@ -34,16 +34,21 @@ func resourceArmApiManagementApi() *schema.Resource {
 				ForceNew: true,
 			},
 
+			"resource_group_name": resourceGroupNameSchema(),
+
+			"location": locationSchema(),
+
 			"path": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"resource_group_name": resourceGroupNameSchema(),
-
-			"location": locationSchema(),
-
 			"service_url": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -94,21 +99,16 @@ func resourceArmApiManagementApi() *schema.Resource {
 				},
 			},
 
-			"display_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
 			"protocols": {
 				Type: schema.TypeList,
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:             schema.TypeString,
+					DiffSuppressFunc: ignoreCaseDiffSuppressFunc,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(apimanagement.ProtocolHTTP),
+						string(apimanagement.ProtocolHTTPS),
+					}, true),
 				},
-				Optional: true,
-			},
-
-			"description": {
-				Type:     schema.TypeString,
 				Optional: true,
 			},
 
@@ -138,11 +138,11 @@ func resourceArmApiManagementApi() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"header": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"query": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 					},
 				},
@@ -159,33 +159,68 @@ func resourceArmApiManagementApi() *schema.Resource {
 				Optional:         true,
 			},
 
-			"revision_description": {
-				Type:     schema.TypeString,
+			"revision": {
+				Type:     schema.TypeInt,
+				Default:  1,
 				Optional: true,
-				// Default:  1,
 			},
 
-			// apiVersion 							- Indicates the Version identifier of the API if the API is versioned
-			// apiVersionSetId  				- A resource identifier for the related ApiVersionSet.
-			// properties.apiVersionSet - An API Version Set contains the common configuration for a set of API Versions relating
-			//
 			"version": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 
-			"api_version_set_id": {
+			"version_set": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"description": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"scheme": {
+							Type: schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{
+								string(apimanagement.VersioningSchemeQuery),
+								string(apimanagement.VersioningSchemeHeader),
+								string(apimanagement.VersioningSchemeSegment),
+							}, true),
+							DiffSuppressFunc: ignoreCaseDiffSuppressFunc,
+							Required:         true,
+						},
+						"query_name": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"header_name": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+			},
+
+			"version_set_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 			},
 
 			"is_current": {
 				Type:     schema.TypeBool,
+				Optional: true,
 				Computed: true,
 			},
 
 			"is_online": {
 				Type:     schema.TypeBool,
+				Optional: true,
 				Computed: true,
 			},
 		},
@@ -200,24 +235,22 @@ func resourceArmApiManagementApiCreateUpdate(d *schema.ResourceData, meta interf
 
 	resGroup := d.Get("resource_group_name").(string)
 	serviceName := d.Get("service_name").(string)
-	apiId := d.Get("name").(string)
+	name := d.Get("name").(string)
+	revision := int32(d.Get("revision").(int))
+
+	apiId := fmt.Sprintf("%s;rev=%d", name, revision)
 
 	var properties *apimanagement.APICreateOrUpdateProperties
+	var updateProperties *apimanagement.APIContractUpdateProperties
 
 	var err error
-	isImport := false
+	_, isImport := d.GetOk("import")
 
-	if _, ok := d.GetOk("import"); ok {
-		isImport = true
-		properties, err = expandApiManagementImportProperties(d)
-		if err != nil {
-			return err
-		}
+	if isImport {
+		properties = expandApiManagementImportProperties(d)
+		updateProperties = expandApiManagementApiUpdateProperties(d)
 	} else {
-		properties, err = expandApiManagementApiProperties(d)
-		if err != nil {
-			return err
-		}
+		properties = expandApiManagementApiProperties(d)
 	}
 
 	apiParams := apimanagement.APICreateOrUpdateParameter{
@@ -230,23 +263,18 @@ func resourceArmApiManagementApiCreateUpdate(d *schema.ResourceData, meta interf
 
 	apiContract, err := client.CreateOrUpdate(ctx, resGroup, serviceName, apiId, apiParams, "")
 	if err != nil {
-		log.Printf("Oh no!!! %+v", err)
 		return err
 	}
 
-	if v, ok := d.GetOk("service_url"); isImport && ok {
-		serviceURL := v.(string)
-		updateProps := apimanagement.APIContractUpdateProperties{
-			ServiceURL: &serviceURL,
+	if isImport {
+		updateParams := apimanagement.APIUpdateContract{
+			APIContractUpdateProperties: updateProperties,
 		}
 
-		updateParams := apimanagement.APIUpdateContract{
-			APIContractUpdateProperties: &updateProps,
-		}
 		_, err := client.Update(ctx, resGroup, serviceName, apiId, updateParams, "")
+
 		if err != nil {
-			log.Printf("Oh no!!! %+v", err)
-			return err
+			return fmt.Errorf("Failed to update after import: %+v", err)
 		}
 	}
 
@@ -257,7 +285,7 @@ func resourceArmApiManagementApiCreateUpdate(d *schema.ResourceData, meta interf
 
 func resourceArmApiManagementApiRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*ArmClient)
-	apiManagementClient := meta.(*ArmClient).apiManagementServiceClient
+	apiManagementApiClient := meta.(*ArmClient).apiManagementApiClient
 
 	id, err := parseAzureResourceID(d.Id())
 	if err != nil {
@@ -265,19 +293,21 @@ func resourceArmApiManagementApiRead(d *schema.ResourceData, meta interface{}) e
 	}
 
 	resGroup := id.ResourceGroup
-	name := id.Path["service"]
+	serviceName := id.Path["service"]
+	apiid := id.Path["apis"]
 
 	ctx := client.StopContext
-	resp, err := apiManagementClient.Get(ctx, resGroup, name)
+	resp, err := apiManagementApiClient.Get(ctx, resGroup, serviceName, apiid)
 
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("Error making Read request on API Management Service %q (Resource Group %q): %+v", name, resGroup, err)
+		return fmt.Errorf("Error making Read request on API Management API %q on service %q (Resource Group %q): %+v", apiid, serviceName, resGroup, err)
 	}
 
+	log.Printf("%+v\n", resp)
 	return nil
 }
 
@@ -309,28 +339,72 @@ func resourceArmApiManagementApiDelete(d *schema.ResourceData, meta interface{})
 	return nil
 }
 
-func expandApiManagementApiProperties(d *schema.ResourceData) (*apimanagement.APICreateOrUpdateProperties, error) {
-	// revision := d.Get("revision").(string)
-	// soapApiType := d.Get("soap_api_type").(string)
-	// version := d.Get("version").(string)
+func expandApiManagementApiProperties(d *schema.ResourceData) *apimanagement.APICreateOrUpdateProperties {
+	revision := d.Get("revision").(string)
+	displayName := d.Get("name").(string)
 	path := d.Get("path").(string)
 	serviceUrl := d.Get("service_url").(string)
-	displayName := d.Get("display_name").(string)
-	protocolsConfig := d.Get("protocols").([]interface{})
+	description := d.Get("description").(string)
+	soapApiTypeConfig := d.Get("soap_api_type").(string)
+	version := d.Get("version").(string)
+	versionSetId := d.Get("version_set_id").(string)
+	isCurrent := d.Get("is_current").(bool)
+	isOnline := d.Get("is_online").(bool)
+
+	soapApiType := apimanagement.APIType(soapApiTypeConfig)
+
+	protos := make([]apimanagement.Protocol, 0)
+	if p, ok := d.GetOk("protocols.0"); ok {
+		protocolsConfig := p.([]interface{})
+		for _, v := range protocolsConfig {
+			protos = append(protos, apimanagement.Protocol(v.(string)))
+		}
+	}
+	if len(protos) == 0 {
+		protos = append(protos, apimanagement.ProtocolHTTPS)
+	}
+
+	// versionSetId := d.Get("api_version_set_id").(string)
+
+	// var oAuth *apimanagement.OAuth2AuthenticationSettingsContract
+	// if oauthConfig := d.Get("oauth").([]interface{}); oauthConfig != nil && len(oauthConfig) > 0 {
+	// 	oAuth = expandApiManagementApiOAuth(oauthConfig)
+	// }
+
+	return &apimanagement.APICreateOrUpdateProperties{
+		APIRevision: &revision,
+		APIType:     soapApiType,
+		APIVersion:  &version,
+		// APIVersionSet: nil,
+		APIVersionSetID: &versionSetId,
+		// AuthenticationSettings: &apimanagement.AuthenticationSettingsContract{
+		// 	OAuth2: oAuth,
+		// },
+		Description: &description,
+		DisplayName: &displayName,
+		IsCurrent:   &isCurrent,
+		IsOnline:    &isOnline,
+		Path:        &path,
+		Protocols:   &protos,
+		ServiceURL:  &serviceUrl,
+		// SubscriptionKeyParameterNames: nil,
+	}
+}
+
+func expandApiManagementApiUpdateProperties(d *schema.ResourceData) *apimanagement.APIContractUpdateProperties {
+	name := d.Get("name").(string)
+	path := d.Get("path").(string)
+	serviceUrl := d.Get("service_url").(string)
 	description := d.Get("description").(string)
 	soapApiTypeConfig := d.Get("soap_api_type").(string)
 	// revisionDescription := d.Get("revision_description").(string)
 
 	protos := make([]apimanagement.Protocol, 0)
 
-	for _, v := range protocolsConfig {
-		switch p := strings.ToLower(v.(string)); p {
-		case "http":
-			protos = append(protos, apimanagement.ProtocolHTTP)
-		case "https":
-			protos = append(protos, apimanagement.ProtocolHTTPS)
-		default:
-			return nil, fmt.Errorf("Error expanding protocols. Valid protocols are `http` and `https`.")
+	if p, ok := d.GetOk("protocols.0"); ok {
+		protocolsConfig := p.([]interface{})
+		for _, v := range protocolsConfig {
+			protos = append(protos, apimanagement.Protocol(v.(string)))
 		}
 	}
 
@@ -356,24 +430,24 @@ func expandApiManagementApiProperties(d *schema.ResourceData) (*apimanagement.AP
 
 	log.Printf("ServiceURL: %s", &serviceUrl)
 
-	return &apimanagement.APICreateOrUpdateProperties{
-		// APIRevision: &revision,
-		APIType:     soapApiType,
-		DisplayName: &displayName,
-		ServiceURL:  &serviceUrl,
+	return &apimanagement.APIContractUpdateProperties{
+		// APIRevision: nil,
+		APIType: soapApiType,
+		// APIVersion: nil,
+		// APIVersionSetID: nil,
+		// AuthenticationSettings: nil,
 		Description: &description,
-		// APIRevision: &revisionDescription,
-		// APIVersion:  &version,
-		// APIVersionSetID: &versionSetId,
-		// AuthenticationSettings: &apimanagement.AuthenticationSettingsContract{
-		// 	OAuth2: oAuth,
-		// },
-		Path:      &path,
-		Protocols: &protos,
-	}, nil
+		DisplayName: &name,
+		// IsCurrent: nil,
+		// IsOnline: nil,
+		Path:       &path,
+		Protocols:  &protos,
+		ServiceURL: &serviceUrl,
+		// SubscriptionKeyParameterNames: nil,
+	}
 }
 
-func expandApiManagementImportProperties(d *schema.ResourceData) (*apimanagement.APICreateOrUpdateProperties, error) {
+func expandApiManagementImportProperties(d *schema.ResourceData) *apimanagement.APICreateOrUpdateProperties {
 	path := d.Get("path").(string)
 
 	var contentFormat apimanagement.ContentFormat
@@ -387,22 +461,10 @@ func expandApiManagementImportProperties(d *schema.ResourceData) (*apimanagement
 	}
 
 	return &apimanagement.APICreateOrUpdateProperties{
-		// APIRevision: &revision,
-		// APIType:     soapApiType,
-		// DisplayName: &displayName,
-		// ServiceURL:  &serviceUrl,
-		// Description: &description,
-		// APIRevision: &revisionDescription,
-		// APIVersion:  &version,
-		// APIVersionSetID: &versionSetId,
-		// AuthenticationSettings: &apimanagement.AuthenticationSettingsContract{
-		// 	OAuth2: oAuth,
-		// },
-		Path: &path,
-		// Protocols:     &protos,
+		Path:          &path,
 		ContentFormat: contentFormat,
 		ContentValue:  &contentValue,
-	}, nil
+	}
 }
 
 func expandApiManagementApiOAuth(oauth []interface{}) *apimanagement.OAuth2AuthenticationSettingsContract {

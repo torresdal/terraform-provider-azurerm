@@ -195,6 +195,14 @@
 			"versionExact": "v20.1.0"
 		},
 		{
+			"checksumSHA1": "yShJsIf7y4pGWsFKOnEOVRLUFMA=",
+			"path": "github.com/Azure/azure-sdk-for-go/services/preview/apimanagement/mgmt/2018-06-01-preview/apimanagement",
+			"revision": "2935c0241c74bd8549b843978dd6fc1be6f48b4a",
+			"revisionTime": "2018-08-31T14:25:13Z",
+			"version": "=v20.1.0",
+			"versionExact": "v20.1.0"
+		},
+		{
 			"checksumSHA1": "e4hCajXDSuWNkUvwA35jMHGm20E=",
 			"path": "github.com/Azure/azure-sdk-for-go/services/preview/authorization/mgmt/2018-01-01-preview/authorization",
 			"revision": "2935c0241c74bd8549b843978dd6fc1be6f48b4a",

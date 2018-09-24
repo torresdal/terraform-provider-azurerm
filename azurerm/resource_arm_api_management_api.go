@@ -327,7 +327,7 @@ func resourceArmApiManagementApiDelete(d *schema.ResourceData, meta interface{})
 
 	log.Printf("[DEBUG] Deleting api management api %s: %s", resGroup, apiid)
 
-	resp, err := client.Delete(ctx, resGroup, serviceName, apiid, "*")
+	resp, err := client.Delete(ctx, resGroup, serviceName, apiid, "*", utils.Bool(true))
 
 	if err != nil {
 		if utils.ResponseWasNotFound(resp) {
